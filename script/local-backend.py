@@ -29,7 +29,8 @@ while True:
         request = json.loads(sys.stdin.readline())
         msgtype = request.get('dhcp-message-type', '')
         if msgtype == 'discover' or msgtype == 'request':
-            preferred_ip = request.get("requested-ip-address")
+            preferred_ip:str = request.get("requested-ip-address")
+            
             mac_address = request.get('client-hardware-address', '')
 
             assigned_ip = None
@@ -40,7 +41,7 @@ while True:
             if not assigned_ip:
                 if dynamic_mac_ip_map.get(mac_address) == preferred_ip:
                     assigned_ip = preferred_ip
-                elif check_ip_in_use(preferred_ip) == False:
+                elif preferred_ip and preferred_ip.startswith('10.65.') and check_ip_in_use(preferred_ip) == False:
                     assigned_ip = preferred_ip
             if not assigned_ip:
                 def gen_ip_in_pool():
@@ -60,7 +61,7 @@ while True:
                 while check_ip_in_use(assigned_ip):
                     assigned_ip = gen_ip_in_pool()
                 
-
+            dynamic_mac_ip_map[mac_address] = assigned_ip
             response = {
                 'dhcp-message-type':       'offer' if msgtype == 'discover' else 'ack',
                 'client-hardware-address': mac_address,
